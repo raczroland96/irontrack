@@ -75,7 +75,6 @@ model Exercise {
   name        String
   machine     String?
   muscleGroup String?
-  description String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

@@ -7,7 +7,6 @@ INSERT INTO "Exercise" (
     "name",
     "machine",
     "muscleGroup",
-    "description",
     "createdAt",
     "updatedAt"
 )
@@ -16,124 +15,104 @@ SELECT
     seed."name",
     seed."machine",
     seed."muscleGroup",
-    seed."description",
     CURRENT_TIMESTAMP,
     CURRENT_TIMESTAMP
 FROM (
     VALUES
     (
-        'Barbell Bench Press',
-        'Barbell',
-        'Chest',
-        'Horizontal barbell press targeting the chest, shoulders and triceps.'
+        'Fekvenyomas',
+        'Rud',
+        'Mell'
     ),
     (
-        'Chest Press',
-        'Machine',
-        'Chest',
-        'Seated machine press targeting the chest.'
+        'Mellnyomas',
+        'Gep',
+        'Mell'
     ),
     (
         'Incline Dumbbell Press',
         'Dumbbells',
-        'Chest',
-        'Incline dumbbell press emphasizing the upper chest.'
+        'Mell'
     ),
     (
-        'Cable Fly',
-        'Cable Machine',
-        'Chest',
-        'Cable fly for controlled chest isolation.'
+        'Mell tarogatas',
+        'Gep',
+        'Mell'
     ),
     (
-        'Lat Pulldown',
-        'Cable Machine',
-        'Back',
-        'Vertical pulling movement targeting the lats.'
+        'Huzockodas',
+        'Szabad suly',
+        'Hat'
     ),
     (
-        'Seated Cable Row',
-        'Cable Machine',
-        'Back',
-        'Horizontal cable row targeting the mid-back.'
+        'Lehuzas',
+        'Gep',
+        'Hat'
     ),
     (
-        'Barbell Row',
-        'Barbell',
-        'Back',
-        'Bent-over barbell row for the back and posterior chain.'
+        'Szeles huzas ulve',
+        'Gep',
+        'Hat'
     ),
     (
-        'Pull-up',
-        'Pull-up Bar',
-        'Back',
-        'Bodyweight vertical pull targeting the lats and arms.'
+        'Szuk huzas ulve',
+        'Gep',
+        'Hat'
     ),
     (
-        'Shoulder Press',
-        'Machine',
-        'Shoulders',
-        'Seated machine overhead press.'
+        'Oldal emeles',
+        'Gep',
+        'Vall'
     ),
     (
-        'Dumbbell Lateral Raise',
-        'Dumbbells',
-        'Shoulders',
-        'Lateral raise targeting the side deltoids.'
+        'Kitolas',
+        'Gep',
+        'Vall'
     ),
     (
-        'Bicep Curl',
-        'Dumbbells',
-        'Arms',
-        'Elbow flexion movement targeting the biceps.'
+        'Bicepsz',
+        'Kezi suly',
+        'Kar'
     ),
     (
-        'Tricep Pushdown',
-        'Cable Machine',
-        'Arms',
-        'Cable elbow extension targeting the triceps.'
+        'Tricepsz',
+        'Kezi suly',
+        'Kar'
     ),
     (
-        'Leg Press',
-        'Machine',
-        'Legs',
-        'Machine compound movement targeting the quadriceps and glutes.'
+        'Labtolo',
+        'Gep',
+        'Lab'
     ),
     (
-        'Barbell Squat',
-        'Barbell',
-        'Legs',
-        'Compound squat targeting the quadriceps and glutes.'
+        'Gugolas',
+        'Gep',
+        'Lab'
     ),
     (
-        'Leg Extension',
-        'Machine',
-        'Legs',
-        'Knee extension movement targeting the quadriceps.'
+        'Labfeszito',
+        'Gep',
+        'Lab'
     ),
     (
-        'Leg Curl',
-        'Machine',
-        'Legs',
-        'Knee flexion movement targeting the hamstrings.'
+        'Labhajlito',
+        'Gep',
+        'Lab'
     ),
     (
-        'Romanian Deadlift',
-        'Barbell',
-        'Legs',
-        'Hip hinge movement targeting the hamstrings and glutes.'
+        'Felhuzas',
+        'Rud',
+        'Lab'
     ),
     (
-        'Standing Calf Raise',
-        'Machine',
-        'Calves',
-        'Calf raise targeting the gastrocnemius and soleus.'
+        'Vadli',
+        'Gep',
+        'Vadli'
     )
 ) AS seed(
     "name",
     "machine",
-    "muscleGroup",
-    "description"
+    "muscleGroup"
 )
 WHERE NOT EXISTS (
     SELECT 1

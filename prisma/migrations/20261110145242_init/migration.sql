@@ -62,7 +62,6 @@ CREATE TABLE "Exercise" (
     "name" TEXT NOT NULL,
     "machine" TEXT,
     "muscleGroup" TEXT,
-    "description" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
