@@ -1,5 +1,5 @@
 
-import Link from "next/link";
+import { startWorkout } from "@/components/workouts/actions";
 import { headers } from "next/headers";
 import {
   CalendarDays,
@@ -122,15 +122,17 @@ export default async function WorkoutsPage() {
           </p>
         </div>
 
-        <Link
-          href="/workouts/new"
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-lime-400 px-5 py-3 text-sm font-semibold text-black transition hover:bg-lime-300"
-        >
+        <form action={startWorkout}>
+          <button
+            type="submit"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-lime-400 px-5 py-3 text-sm font-semibold text-black transition hover:bg-lime-300"
+          >
           <Plus size={18} />
-          {activeWorkout
+            {activeWorkout
             ? "Continue workout"
             : "Start workout"}
-        </Link>
+          </button>
+        </form>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">

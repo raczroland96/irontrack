@@ -4,6 +4,7 @@
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { redirect } from "next/navigation";
 
 const instant = false;
 
@@ -274,6 +275,37 @@ export async function removeExerciseFromWorkout(
       "Exercise not found in this workout."
     );
   }
+}
+
+export async function startWorkout() {
+  const userId = await requireUserId();
+
+  // Reuse an existing unfinished workout.
+  const existingWorkout = await prisma.workout.findFirst({
+    where: {
+      userId,
+      finishedAt: null,
+    },
+    orderBy: {
+      startedAt: "desc",
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (existingWorkout) {
+    redirect("/workouts/new");
+  }
+
+  await prisma.workout.create({
+    data: {
+      userId,
+      name: "Today's workout",
+    },
+  });
+
+  redirect("/workouts/new");
 }
 
 export async function finishWorkout(

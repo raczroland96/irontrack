@@ -42,23 +42,7 @@ export default async function NewWorkoutPage() {
   });
 
   if (!workout) {
-    workout = await prisma.workout.create({
-      data: {
-        userId,
-        name: "Today's workout",
-      },
-      include: {
-        exercises: {
-          orderBy: { order: "asc" },
-          include: {
-            exercise: true,
-            sets: {
-              orderBy: { setNumber: "asc" },
-            },
-          },
-        },
-      },
-    });
+    redirect("/workouts");
   }
 
   const exerciseLibrary = await prisma.exercise.findMany({
