@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -6,6 +7,7 @@ import {
   Dumbbell,
   Check,
 } from "lucide-react";
+import { useState } from "react";
 
 export interface WorkoutSet {
   id: string;
@@ -64,6 +66,23 @@ export default function ExerciseCard({
   onToggleSet,
   onRemoveExercise,
 }: ExerciseCardProps) {
+  // Keep empty input values locally.
+  // The actual workout data remains numeric.
+  const [emptyFields, setEmptyFields] = useState<
+    Record<string, boolean>
+  >({});
+
+  const updateEmptyState = (
+    setId: string,
+    field: "weight" | "reps",
+    isEmpty: boolean
+  ) => {
+    setEmptyFields((previous) => ({
+      ...previous,
+      [`${setId}-${field}`]: isEmpty,
+    }));
+  };
+
   return (
     <section className="rounded-2xl border border-zinc-800 bg-[#111113] p-4 sm:p-6">
       <div className="mb-5 flex items-start justify-between">
@@ -115,93 +134,129 @@ export default function ExerciseCard({
       </div>
 
       <div className="space-y-3">
-        {exercise.sets.map((set, index) => (
-          <div
-            key={set.id}
-            className={`grid grid-cols-[35px_1fr_1fr_40px] items-center gap-2 ${
-              set.completed ? "opacity-60" : ""
-            }`}
-          >
-            <span className="text-sm text-zinc-500">
-              {index + 1}
-            </span>
+        {exercise.sets.map((set, index) => {
+          const weightEmpty =
+            emptyFields[`${set.id}-weight`] ??
+            set.weight === 0;
 
-            <input
-              type="number"
-              min="0"
-              step="0.5"
-              value={set.weight}
-              onChange={(event) =>
-                onUpdateSet(
-                  exercise.id,
-                  set.id,
-                  "weight",
-                  Number(event.target.value)
-                )
-              }
-              onBlur={(event) =>
-                onSaveSet(
-                  exercise.id,
-                  set.id,
-                  Number(event.currentTarget.value),
-                  set.reps
-                )
-              }
-              className="w-full min-w-0 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-3 text-sm text-white outline-none focus:border-lime-400"
-            />
+          const repsEmpty =
+            emptyFields[`${set.id}-reps`] ??
+            set.reps === 0;
 
-            <input
-              type="number"
-              min="0"
-              step="1"
-              value={set.reps}
-              onChange={(event) =>
-                onUpdateSet(
-                  exercise.id,
-                  set.id,
-                  "reps",
-                  Number(event.target.value)
-                )
-              }
-              onBlur={(event) =>
-                onSaveSet(
-                  exercise.id,
-                  set.id,
-                  set.weight,
-                  Number(event.currentTarget.value)
-                )
-              }
-              className="w-full min-w-0 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-3 text-sm text-white outline-none focus:border-lime-400"
-            />
-
-            <button
-              onClick={() =>
-                onToggleSet(exercise.id, set.id)
-              }
-              className={`flex h-10 w-10 items-center justify-center rounded-lg transition ${
-                set.completed
-                  ? "bg-lime-400 text-black"
-                  : "border border-zinc-700 text-zinc-400 hover:border-lime-400 hover:text-lime-400"
+          return (
+            <div
+              key={set.id}
+              className={`grid grid-cols-[35px_1fr_1fr_40px] items-center gap-2 ${
+                set.completed ? "opacity-60" : ""
               }`}
-              aria-label={
-                set.completed
-                  ? "Mark set incomplete"
-                  : "Complete set"
-              }
             >
-              <Check size={18} />
-            </button>
+              <span className="text-sm text-zinc-500">
+                {index + 1}
+              </span>
 
-            <button
-              onClick={() =>
-                onRemoveSet(exercise.id, set.id)
-              }
-              className="col-span-4 flex justify-end text-xs text-zinc-600 hover:text-red-400"
-            >
-              Remove set
-            </button>
-          </div>
-        ))}
+              {/* Weight input */}
+              <input
+                type="text"
+                inputMode="decimal"
+                placeholder="0"
+                value={weightEmpty ? "" : String(set.weight)}
+                onChange={(event) => {
+                  const value = event.target.value;
+
+                  if (!/^\d*\.?\d*$/.test(value)) return;
+
+                  updateEmptyState(
+                    set.id,
+                    "weight",
+                    value === ""
+                  );
+
+                  if (value !== "" && value !== ".") {
+                    onUpdateSet(
+                      exercise.id,
+                      set.id,
+                      "weight",
+                      Number(value)
+                    );
+                  }
+                }}
+                onBlur={() => {
+                  onSaveSet(
+                    exercise.id,
+                    set.id,
+                    set.weight,
+                    set.reps
+                  );
+                }}
+                className="w-full min-w-0 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-3 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-lime-400"
+              />
+
+              {/* Reps input */}
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder="0"
+                value={repsEmpty ? "" : String(set.reps)}
+                onChange={(event) => {
+                  const value = event.target.value;
+
+                  if (!/^\d*$/.test(value)) return;
+
+                  updateEmptyState(
+                    set.id,
+                    "reps",
+                    value === ""
+                  );
+
+                  if (value !== "") {
+                    onUpdateSet(
+                      exercise.id,
+                      set.id,
+                      "reps",
+                      Number(value)
+                    );
+                  }
+                }}
+                onBlur={() => {
+                  onSaveSet(
+                    exercise.id,
+                    set.id,
+                    set.weight,
+                    set.reps
+                  );
+                }}
+                className="w-full min-w-0 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-3 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-lime-400"
+              />
+
+              <button
+                onClick={() =>
+                  onToggleSet(exercise.id, set.id)
+                }
+                className={`flex h-10 w-10 items-center justify-center rounded-lg transition ${
+                  set.completed
+                    ? "bg-lime-400 text-black"
+                    : "border border-zinc-700 text-zinc-400 hover:border-lime-400 hover:text-lime-400"
+                }`}
+                aria-label={
+                  set.completed
+                    ? "Mark set incomplete"
+                    : "Complete set"
+                }
+              >
+                <Check size={18} />
+              </button>
+
+              <button
+                onClick={() =>
+                  onRemoveSet(exercise.id, set.id)
+                }
+                className="col-span-4 flex justify-end text-xs text-zinc-600 hover:text-red-400"
+              >
+                Remove set
+              </button>
+            </div>
+          );
+        })}
       </div>
 
       <button
