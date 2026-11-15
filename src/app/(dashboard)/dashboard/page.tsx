@@ -247,7 +247,7 @@ export default async function DashboardPage() {
           href="/workouts/new"
           className="shrink-0 rounded-xl bg-lime-400 px-5 py-3 text-sm font-semibold text-black transition hover:bg-lime-300"
         >
-          + Start workout
+          Go to workouts
         </Link>
       </div>
 
@@ -265,32 +265,9 @@ export default async function DashboardPage() {
           description="Training sessions"
           icon={CalendarDays}
         />
-
-        <StatCard
-          title="Training volume"
-          value={`${Math.round(totalVolume).toLocaleString()} kg`}
-          description="Completed weight × reps"
-          icon={TrendingUp}
-        />
-
-        <StatCard
-          title="Completed sets"
-          value={completedSets.length.toString()}
-          description="Across completed workouts"
-          icon={Trophy}
-        />
       </div>
 
       <div className="grid gap-6 xl:grid-cols-3">
-        <div className="xl:col-span-2">
-          <ProgressChart
-            data={progressData}
-            exerciseName={
-              mostTrackedExercise?.[1].name ?? null
-            }
-          />
-        </div>
-
         <RecentWorkouts workouts={recentWorkouts} />
       </div>
     </div>
