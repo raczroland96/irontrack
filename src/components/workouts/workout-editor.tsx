@@ -634,7 +634,7 @@ export default function WorkoutEditor({
         disabled={isPending}
       />
 
-      <div className="sticky bottom-20 z-20 rounded-2xl border border-zinc-800 bg-[#111113]/95 p-4 backdrop-blur sm:bottom-4">
+      <div className="bottom-20 z-20 rounded-2xl border border-zinc-800 bg-[#111113]/95 p-4 backdrop-blur sm:bottom-4">
         <button
           type="button"
           onClick={handleFinish}
