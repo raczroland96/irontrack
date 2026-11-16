@@ -1,3 +1,4 @@
+import { getI18n } from "@/lib/i18n-server";
 import Link from "next/link";
 import {
   Dumbbell,
@@ -14,36 +15,37 @@ interface RecentWorkout {
   inProgress: boolean;
 }
 
-export default function RecentWorkouts({
+export default async function RecentWorkouts({
   workouts,
 }: {
   workouts: RecentWorkout[];
 }) {
+  const { t } = await getI18n();
   return (
     <div className="rounded-2xl border border-zinc-800 bg-[#111113] p-6">
       <div className="mb-6 flex items-center justify-between">
         <h3 className="font-semibold text-white">
-          Recent workouts
+          {t("Recent workouts", "Legutóbbi edzések")}
         </h3>
 
         <Link
           href="/workouts"
           className="text-xs text-lime-400 hover:text-lime-300"
         >
-          View all
+          {t("View all", "Összes megtekintése")}
         </Link>
       </div>
 
       {workouts.length === 0 ? (
         <p className="py-8 text-center text-sm text-zinc-500">
-          Your workout history will appear here.
+          {t("Your workout history will appear here.", "Itt jelenik meg az edzéstörténeted.")}
         </p>
       ) : (
         <div className="space-y-5">
           {workouts.map((workout) => (
             <Link
               key={workout.id}
-              href="/workouts"
+              href={workout.inProgress ? "/workouts/new" : `/workouts/${workout.id}`}
               className="flex items-center gap-4"
             >
               <div className="rounded-xl bg-zinc-800 p-3">
@@ -59,7 +61,7 @@ export default function RecentWorkouts({
                 </p>
 
                 <p className="mt-1 text-xs text-zinc-500">
-                  {workout.exercises} exercises ·{" "}
+                  {workout.exercises} {t("exercises", "gyakorlat")} ·{" "}
                   {workout.duration}
                 </p>
               </div>

@@ -1,4 +1,6 @@
 
+import { getI18n } from "@/lib/i18n-server";
+
 import { headers } from "next/headers";
 
 import { auth } from "@/lib/auth";
@@ -7,6 +9,7 @@ import { prisma } from "@/lib/prisma";
 import ExerciseLibrary from "@/components/settings/exercise-library";
 
 export default async function ExercisesPage() {
+  const { t } = await getI18n();
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -30,12 +33,11 @@ export default async function ExercisesPage() {
     <div className="mx-auto max-w-7xl space-y-8">
       <div>
         <h1 className="text-2xl font-bold text-white">
-          Exercise Library
+          {t("Exercise Library", "Gyakorlattár")}
         </h1>
 
         <p className="mt-2 text-sm text-zinc-500">
-          Browse all available exercises or contribute a new exercise
-          to the shared library.
+          {t("Browse all available exercises or contribute a new exercise to the shared library.", "Böngéssz a gyakorlatok között, vagy adj hozzá új gyakorlatot a közös tárhoz.")}
         </p>
       </div>
 

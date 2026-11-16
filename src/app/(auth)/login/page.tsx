@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -7,9 +6,12 @@ import { useRouter } from "next/navigation";
 import { Dumbbell, Loader2 } from "lucide-react";
 
 import { authClient } from "@/lib/auth-client";
+import { useI18n } from "@/components/i18n-provider";
+import LanguageSwitcher from "@/components/language-switcher";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { t } = useI18n();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,14 +32,14 @@ export default function LoginPage() {
       });
 
       if (result.error) {
-        setError(result.error.message || "Invalid credentials");
+        setError(t("Unable to sign in. Check your email and password and try again.", "Nem sikerült belépni. Ellenőrizd az e-mail-címed és a jelszavad, majd próbáld újra."));
         return;
       }
 
       router.push("/dashboard");
       router.refresh();
     } catch {
-      setError("Something went wrong. Please try again.");
+      setError(t("Something went wrong. Please try again.", "Hiba történt. Kérjük, próbáld újra."));
     } finally {
       setLoading(false);
     }
@@ -47,6 +49,7 @@ export default function LoginPage() {
     <main className="flex min-h-screen items-center justify-center bg-[#09090b] px-4 py-10">
 
       <div className="w-full max-w-md">
+        <div className="mb-6 flex justify-end"><LanguageSwitcher /></div>
 
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-lime-400 text-black">
@@ -64,11 +67,12 @@ export default function LoginPage() {
         >
 
           <div>
-            <label className="mb-2 block text-sm text-zinc-300">
-              Email address
+            <label htmlFor="login-email" className="mb-2 block text-sm text-zinc-300">
+              {t("Email address", "E-mail-cím")}
             </label>
 
             <input
+              id="login-email"
               required
               type="email"
               value={email}
@@ -79,22 +83,23 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label className="mb-2 block text-sm text-zinc-300">
-              Password
+            <label htmlFor="login-password" className="mb-2 block text-sm text-zinc-300">
+              {t("Password", "Jelszó")}
             </label>
 
             <input
+              id="login-password"
               required
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Your password"
+              placeholder={t("Your password", "A jelszavad")}
               className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-white outline-none focus:border-lime-400"
             />
           </div>
 
           {error && (
-            <p className="rounded-lg bg-red-500/10 p-3 text-sm text-red-400">
+            <p role="alert" className="rounded-lg bg-red-500/10 p-3 text-sm text-red-400">
               {error}
             </p>
           )}
@@ -105,16 +110,16 @@ export default function LoginPage() {
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-lime-400 py-3 font-semibold text-black hover:bg-lime-300 disabled:opacity-50"
           >
             {loading && <Loader2 className="animate-spin" size={18} />}
-            Sign in
+            {loading ? t("Signing in…", "Bejelentkezés…") : t("Sign in", "Bejelentkezés")}
           </button>
 
           <p className="text-center text-sm text-zinc-500">
-            Dont have an account?{" "}
+            {t("Don’t have an account?", "Még nincs fiókod?")}{" "}
             <Link
               href="/register"
               className="font-medium text-lime-400 hover:text-lime-300"
             >
-              Create account
+              {t("Create account", "Fiók létrehozása")}
             </Link>
           </p>
         </form>
