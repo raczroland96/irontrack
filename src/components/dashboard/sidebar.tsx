@@ -1,7 +1,8 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
+import { useI18n } from "@/components/i18n-provider";
 import LogoutButton from "@/components/dashboard/logout-button";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -11,52 +12,40 @@ import {
   Dumbbell,
   ChartNoAxesCombined,
   Settings,
+  ClipboardList,
   ChevronLeft,
   ChevronRight,
   X,
 } from "lucide-react";
 
-const navigation = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Workouts", href: "/workouts", icon: Dumbbell },
-  { name: "Progress", href: "/progress", icon: ChartNoAxesCombined },
-  { name: "Settings", href: "/settings", icon: Settings },
-];
+const subscribeToCollapse = (callback: () => void) => {
+  window.addEventListener("storage", callback);
+  window.addEventListener("sidebar-collapse", callback);
+  return () => {
+    window.removeEventListener("storage", callback);
+    window.removeEventListener("sidebar-collapse", callback);
+  };
+};
 
-export default function Sidebar() {
+export default function Sidebar({ username }: { username: string }) {
+  const { t } = useI18n();
   const pathname = usePathname();
-
-  const [username, setUsername] = useState("User");
-  const [collapsed, setCollapsed] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
-
-  useEffect(() => {
-    const saved = localStorage.getItem("sidebar-collapsed");
-    if (saved !== null) setCollapsed(saved === "true");
-
-    async function getUser() {
-      try {
-        const res = await fetch("/api/user");
-        const data = await res.json();
-        setUsername(data.name || "User");
-      } catch {
-        setUsername("User");
-      }
-    }
-
-    getUser();
-  }, []);
-
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [pathname]);
+  const collapsed = useSyncExternalStore(subscribeToCollapse,
+    () => localStorage.getItem("sidebar-collapsed") === "true", () => false);
+  const [mobilePath, setMobilePath] = useState<string | null>(null);
+  const mobileOpen = mobilePath === pathname;
+  const setMobileOpen = (open: boolean) => setMobilePath(open ? pathname : null);
+  const navigation = [
+    { name: t("Dashboard", "Áttekintés"), href: "/dashboard", icon: LayoutDashboard },
+    { name: t("Workout history", "Edzéstörténet"), href: "/workouts", icon: Dumbbell },
+    { name: t("Workout plans", "Edzéstervek"), href: "/plans", icon: ClipboardList },
+    { name: t("Progress", "Fejlődés"), href: "/progress", icon: ChartNoAxesCombined },
+    { name: t("Settings", "Beállítások"), href: "/settings", icon: Settings },
+  ];
 
   function toggleSidebar() {
-    setCollapsed((previous) => {
-      const next = !previous;
-      localStorage.setItem("sidebar-collapsed", String(next));
-      return next;
-    });
+    localStorage.setItem("sidebar-collapsed", String(!collapsed));
+    window.dispatchEvent(new Event("sidebar-collapse"));
   }
 
   return (
@@ -65,7 +54,7 @@ export default function Sidebar() {
       <button
         onClick={() => setMobileOpen(true)}
         className="fixed left-4 top-20 z-50 rounded-lg border border-zinc-700 bg-zinc-900 p-2 text-white md:hidden"
-        aria-label="Open navigation"
+        aria-label={t("Open navigation", "Navigáció megnyitása")}
       >
         <ArrowRightFromLine size={20} />
       </button>
@@ -109,7 +98,7 @@ export default function Sidebar() {
           <button
             onClick={() => setMobileOpen(false)}
             className="text-zinc-400 hover:text-white md:hidden"
-            aria-label="Close navigation"
+            aria-label={t("Close navigation", "Navigáció bezárása")}
           >
             <X size={20} />
           </button>
@@ -119,12 +108,14 @@ export default function Sidebar() {
         <nav className="flex flex-col gap-2">
           {navigation.map((item) => {
             const Icon = item.icon;
-            const active = pathname === item.href;
+            const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
 
             return (
               <Link
                 key={item.href}
                 href={item.href}
+                onClick={() => setMobileOpen(false)}
+                aria-label={item.name}
                 title={collapsed ? item.name : undefined}
                 className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition ${
                   active
@@ -157,6 +148,7 @@ export default function Sidebar() {
 
           {/* Desktop collapse button */}
           <button
+            aria-label={collapsed ? t("Expand navigation", "Navigáció kibontása") : t("Collapse navigation", "Navigáció összecsukása")}
             onClick={toggleSidebar}
             className="hidden w-full items-center justify-center gap-2 rounded-xl border border-zinc-800 py-3 text-sm text-zinc-400 hover:bg-zinc-800 hover:text-white md:flex"
           >
@@ -165,7 +157,7 @@ export default function Sidebar() {
             ) : (
               <>
                 <ChevronLeft size={18} />
-                Collapse
+                {t("Collapse", "Összecsukás")}
               </>
             )}
           </button>

@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
+import { useI18n } from "@/components/i18n-provider";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -46,6 +47,8 @@ export default function WorkoutEditor({
   availableExercises,
 }: WorkoutEditorProps) {
   const router = useRouter();
+  const { t, locale } = useI18n();
+  const queue = useRef<Promise<void>>(Promise.resolve());
 
   const [exercises, setExercises] = useState(
     workout.exercises
@@ -64,17 +67,11 @@ export default function WorkoutEditor({
     )
   );
 
-  const [finished, setFinished] = useState(
-    Boolean(workout.finishedAt)
-  );
-
   const [error, setError] = useState("");
 
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
-    if (finished) return;
-
     const interval = window.setInterval(() => {
       setSeconds(
         Math.max(
@@ -89,7 +86,7 @@ export default function WorkoutEditor({
     }, 1000);
 
     return () => window.clearInterval(interval);
-  }, [finished, workout.startedAt]);
+  }, [workout.startedAt]);
 
   const formatTime = (totalSeconds: number) => {
     const hours = Math.floor(totalSeconds / 3600);
@@ -146,26 +143,25 @@ export default function WorkoutEditor({
           (completedSets / totalSets) * 100
         );
 
+  // Blur saves and button actions share a queue so finishing cannot overtake
+  // an in-flight save. Background saves leave buttons usable after an input blur.
   const runAction = (
     action: () => Promise<unknown>,
-    refresh = true
+    refresh = true,
+    blocking = true,
   ) => {
     setError("");
-
-    startTransition(async () => {
+    const execute = async () => {
       try {
         await action();
-        if (refresh){
-          router.refresh();
-        }
+        if (refresh) router.refresh();
       } catch (cause) {
-        setError(
-          cause instanceof Error
-            ? cause.message
-            : "Something went wrong. Please try again."
-        );
+        setError(cause instanceof Error ? cause.message : t("Something went wrong. Please try again.", "Hiba történt. Próbáld újra."));
       }
-    });
+    };
+    const request = queue.current.then(execute, execute);
+    queue.current = request;
+    if (blocking) startTransition(async () => { await request; });
   };
 
   const updateSetLocally = (
@@ -232,7 +228,7 @@ export default function WorkoutEditor({
         setId,
         weight,
         reps
-      )
+      ), false, false
     );
   };
 
@@ -249,6 +245,7 @@ export default function WorkoutEditor({
         ...current,
         {
           id: created.id,
+          exerciseId: created.exerciseId,
           name: created.exercise.name,
           muscleGroup:
             created.exercise.muscleGroup ?? "",
@@ -376,34 +373,11 @@ export default function WorkoutEditor({
 
     const completed = !currentSet.completed;
 
-    setExercises((current) =>
-      current.map((exercise) =>
-        exercise.id === exerciseId
-          ? {
-              ...exercise,
-              sets: exercise.sets.map((set) =>
-                set.id === setId
-                  ? { ...set, completed }
-                  : set
-              ),
-            }
-          : exercise
-      )
-    );
-
     runAction(async () => {
-      await updateWorkoutSet(
-        workout.id,
-        setId,
-        currentSet.weight,
-        currentSet.reps
-      );
-
-      await toggleWorkoutSet(
-        workout.id,
-        setId,
-        completed
-      );
+      await toggleWorkoutSet(workout.id, setId, completed, currentSet.weight, currentSet.reps);
+      setExercises((current) => current.map((exercise) => exercise.id === exerciseId
+        ? { ...exercise, sets: exercise.sets.map((set) => set.id === setId ? { ...set, completed } : set) }
+        : exercise));
     });
   };
 
@@ -413,7 +387,7 @@ export default function WorkoutEditor({
       name.trim() !== workout.name
     ) {
       runAction(() =>
-        updateWorkoutName(workout.id, name)
+        updateWorkoutName(workout.id, name), false, false
       );
     }
   };
@@ -435,71 +409,10 @@ export default function WorkoutEditor({
 
       await finishWorkout(workout.id);
 
-      setFinished(true);
     },
     false
     );
   };
-
-  if (finished) {
-    return (
-      <div className="mx-auto max-w-2xl py-10">
-        <div className="rounded-2xl border border-zinc-800 bg-[#111113] p-8 text-center sm:p-12">
-          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-lime-400/10">
-            <Trophy
-              className="text-lime-400"
-              size={32}
-            />
-          </div>
-
-          <h1 className="text-2xl font-bold text-white">
-            Workout completed!
-          </h1>
-
-          <div className="my-8 grid grid-cols-3 gap-3">
-            {[
-              {
-                label: "Exercises",
-                value: exercises.length.toString(),
-              },
-              {
-                label: "Sets",
-                value: completedSets.toString(),
-              },
-              {
-                label: "Volume",
-                value: `${totalVolume.toLocaleString()} kg`,
-              },
-            ].map((item) => (
-              <div
-                key={item.label}
-                className="rounded-xl bg-zinc-900 p-3"
-              >
-                <p className="text-xs text-zinc-500">
-                  {item.label}
-                </p>
-
-                <p className="mt-2 text-sm font-semibold text-white">
-                  {item.value}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          <p className="mb-6 text-xs text-zinc-500">
-            Your workout has been saved to your account.
-          </p>
-
-          <Link
-            href="/workouts"
-            className="inline-flex rounded-xl bg-lime-400 px-6 py-3 text-sm font-semibold text-black hover:bg-lime-300"
-          >
-            View workout history
-          </Link>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
@@ -508,18 +421,19 @@ export default function WorkoutEditor({
         className="inline-flex items-center gap-2 text-sm text-zinc-500 hover:text-white"
       >
         <ArrowLeft size={16} />
-        Back to workouts
+        {t("Back to workouts", "Vissza az edzésekhez")}
       </Link>
 
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-lime-400">
             <span className="h-2 w-2 rounded-full bg-lime-400" />
-            Workout in progress
+            {t("Workout in progress", "Folyamatban lévő edzés")}
           </div>
 
           <input
-            aria-label="Workout name"
+            disabled={isPending}
+            aria-label={t("Workout name", "Edzés neve")}
             value={name}
             maxLength={80}
             onChange={(event) =>
@@ -530,7 +444,7 @@ export default function WorkoutEditor({
           />
 
           <p className="mt-1 text-sm text-zinc-500">
-            Record your sets and track your progress.
+            {t("Record your sets and track your progress.", "Rögzítsd a szetteket, és kövesd a fejlődésed.")} · {formatTime(seconds)}
           </p>
         </div>
       </div>
@@ -556,7 +470,7 @@ export default function WorkoutEditor({
           </p>
 
           <p className="text-xs text-zinc-500">
-            Exercises
+            {t("Exercises", "Gyakorlatok")}
           </p>
         </div>
 
@@ -571,7 +485,7 @@ export default function WorkoutEditor({
           </p>
 
           <p className="text-xs text-zinc-500">
-            Completed sets
+            {t("Completed sets", "Teljesített szettek")}
           </p>
         </div>
 
@@ -582,11 +496,11 @@ export default function WorkoutEditor({
           />
 
           <p className="mt-3 text-xl font-bold text-white">
-            {totalVolume.toLocaleString()}
+            {totalVolume.toLocaleString(locale)}
           </p>
 
           <p className="text-xs text-zinc-500">
-            Volume (kg)
+            {t("Volume (kg)", "Megmozgatott súly (kg)")}
           </p>
         </div>
       </div>
@@ -594,7 +508,7 @@ export default function WorkoutEditor({
       <div className="rounded-xl border border-zinc-800 bg-[#111113] p-4">
         <div className="mb-3 flex justify-between text-xs">
           <span className="text-zinc-400">
-            Workout completion
+            {t("Workout completion", "Edzés teljesítése")}
           </span>
 
           <span className="text-lime-400">
@@ -615,6 +529,7 @@ export default function WorkoutEditor({
           <ExerciseCard
             key={exercise.id}
             exercise={exercise}
+            disabled={isPending}
             onUpdateSet={updateSetLocally}
             onSaveSet={saveSet}
             onAddSet={addSet}
@@ -628,7 +543,7 @@ export default function WorkoutEditor({
       <ExerciseSelector
         exercises={availableExercises}
         existingIds={exercises.map(
-          (exercise) => exercise.id
+          (exercise) => exercise.exerciseId
         )}
         onSelect={addExercise}
         disabled={isPending}
@@ -644,12 +559,12 @@ export default function WorkoutEditor({
           className="w-full rounded-xl bg-lime-400 py-4 text-sm font-bold text-black transition hover:bg-lime-300 disabled:cursor-not-allowed disabled:opacity-40"
         >
           {isPending
-            ? "Saving..."
-            : "Finish workout"}
+            ? t("Saving...", "Mentés...")
+            : t("Finish workout", "Edzés befejezése")}
         </button>
 
         <p className="mt-2 text-center text-xs text-zinc-500">
-          Complete at least one set to finish your workout.
+          {t("Complete at least one set to finish your workout.", "Az edzés befejezéséhez teljesíts legalább egy szettet.")}
         </p>
       </div>
     </div>

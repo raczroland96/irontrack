@@ -1,6 +1,7 @@
 
 "use client";
 
+import { useI18n } from "@/components/i18n-provider";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
@@ -8,6 +9,7 @@ import { LogOut } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 
 export default function LogoutButton() {
+  const { t } = useI18n();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -31,6 +33,8 @@ export default function LogoutButton() {
 
   return (
     <button
+      aria-label={t("Sign out", "Kijelentkezés")}
+      title={t("Sign out", "Kijelentkezés")}
       onClick={handleLogout}
       disabled={loading}
       className="flex items-center gap-2 text-zinc-500 hover:text-red-400 disabled:opacity-50"

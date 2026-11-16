@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -7,9 +6,12 @@ import { useRouter } from "next/navigation";
 import { Dumbbell, Loader2 } from "lucide-react";
 
 import { authClient } from "@/lib/auth-client";
+import { useI18n } from "@/components/i18n-provider";
+import LanguageSwitcher from "@/components/language-switcher";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { t } = useI18n();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -32,14 +34,14 @@ export default function RegisterPage() {
       });
 
       if (result.error) {
-        setError(result.error.message || "Registration failed");
+        setError(t("Registration failed. Check your details or sign in if you already have an account.", "Sikertelen regisztráció. Ellenőrizd az adataidat, vagy lépj be, ha már van fiókod."));
         return;
       }
 
       router.push("/dashboard");
       router.refresh();
     } catch {
-      setError("Something went wrong. Please try again.");
+      setError(t("Something went wrong. Please try again.", "Hiba történt. Kérjük, próbáld újra."));
     } finally {
       setLoading(false);
     }
@@ -49,6 +51,7 @@ export default function RegisterPage() {
     <main className="flex min-h-screen items-center justify-center bg-[#09090b] px-4 py-10">
 
       <div className="w-full max-w-md">
+        <div className="mb-6 flex justify-end"><LanguageSwitcher /></div>
 
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-lime-400 text-black">
@@ -56,7 +59,7 @@ export default function RegisterPage() {
           </div>
 
           <h1 className="text-2xl font-bold text-white">
-            Create your account
+            {t("Create your account", "Hozd létre a fiókod")}
           </h1>
         </div>
 
@@ -66,25 +69,27 @@ export default function RegisterPage() {
         >
 
           <div>
-            <label className="mb-2 block text-sm text-zinc-300">
-              Full name
+            <label htmlFor="register-name" className="mb-2 block text-sm text-zinc-300">
+              {t("Full name", "Teljes név")}
             </label>
 
             <input
+              id="register-name"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="John Doe"
+              placeholder={t("John Doe", "Kovács János")}
               className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-white outline-none focus:border-lime-400"
             />
           </div>
 
           <div>
-            <label className="mb-2 block text-sm text-zinc-300">
-              Email address
+            <label htmlFor="register-email" className="mb-2 block text-sm text-zinc-300">
+              {t("Email address", "E-mail-cím")}
             </label>
 
             <input
+              id="register-email"
               required
               type="email"
               value={email}
@@ -95,23 +100,24 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="mb-2 block text-sm text-zinc-300">
-              Password
+            <label htmlFor="register-password" className="mb-2 block text-sm text-zinc-300">
+              {t("Password", "Jelszó")}
             </label>
 
             <input
+              id="register-password"
               required
               type="password"
               minLength={8}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="At least 8 characters"
+              placeholder={t("At least 8 characters", "Legalább 8 karakter")}
               className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-white outline-none focus:border-lime-400"
             />
           </div>
 
           {error && (
-            <p className="rounded-lg bg-red-500/10 p-3 text-sm text-red-400">
+            <p role="alert" className="rounded-lg bg-red-500/10 p-3 text-sm text-red-400">
               {error}
             </p>
           )}
@@ -122,16 +128,16 @@ export default function RegisterPage() {
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-lime-400 py-3 font-semibold text-black hover:bg-lime-300 disabled:opacity-50"
           >
             {loading && <Loader2 className="animate-spin" size={18} />}
-            Create account
+            {loading ? t("Creating account…", "Fiók létrehozása…") : t("Create account", "Fiók létrehozása")}
           </button>
 
           <p className="text-center text-sm text-zinc-500">
-            Already have an account?{" "}
+            {t("Already have an account?", "Már van fiókod?")}{" "}
             <Link
               href="/login"
               className="font-medium text-lime-400 hover:text-lime-300"
             >
-              Sign in
+              {t("Sign in", "Bejelentkezés")}
             </Link>
           </p>
         </form>

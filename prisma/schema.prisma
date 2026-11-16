@@ -14,6 +14,7 @@ model User {
   name          String
   email         String    @unique
   emailVerified Boolean   @default(false)
+  locale        String    @default("en")
   image         String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -21,6 +22,7 @@ model User {
   sessions Session[]
   accounts Account[]
   workouts Workout[]
+  workoutPlans WorkoutPlan[]
 }
 
 model Session {
@@ -79,6 +81,7 @@ model Exercise {
   updatedAt   DateTime @updatedAt
 
   workoutExercises WorkoutExercise[]
+  planExercises PlanExercise[]
 
   @@index([name])
 }
@@ -125,4 +128,44 @@ model WorkoutSet {
   workoutExercise WorkoutExercise @relation(fields: [workoutExerciseId], references: [id], onDelete: Cascade)
 
   @@unique([workoutExerciseId, setNumber])
+}
+
+
+model WorkoutPlan {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exercises PlanExercise[]
+
+  @@index([userId, updatedAt])
+}
+
+model PlanExercise {
+  id         String @id @default(cuid())
+  planId     String
+  exerciseId String
+  order      Int
+
+  plan     WorkoutPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  exercise Exercise    @relation(fields: [exerciseId], references: [id])
+  sets     PlanSet[]
+
+  @@unique([planId, order])
+  @@index([exerciseId])
+}
+
+model PlanSet {
+  id             String  @id @default(cuid())
+  planExerciseId String
+  setNumber      Int
+  weightKg       Decimal @db.Decimal(7, 2)
+  reps           Int
+
+  planExercise PlanExercise @relation(fields: [planExerciseId], references: [id], onDelete: Cascade)
+
+  @@unique([planExerciseId, setNumber])
 }

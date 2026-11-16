@@ -23,7 +23,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-[#09090b]">
-      <Sidebar />
+      <Sidebar username={session.user.name} />
 
       <div className="min-h-screen transition-all duration-300 md:pl-64">
         <Header />

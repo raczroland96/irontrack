@@ -1,6 +1,8 @@
 
 "use client";
 
+import { useI18n } from "@/components/i18n-provider";
+
 import { useMemo, useState } from "react";
 
 import {
@@ -32,6 +34,8 @@ export default function ProgressChart({
   exercises?: Exercise[];
   data?: ProgressPoint[];
 }) {
+  const { locale, t } = useI18n();
+  const numberLocale = locale === "hu" ? "hu-HU" : "en-US";
   const [selectedExercise, setSelectedExercise] =
     useState<string | null>(exercises[0]?.id ?? null);
 
@@ -57,7 +61,7 @@ export default function ProgressChart({
       {/* Header */}
       <div className="mb-6">
         <h3 className="font-semibold text-white">
-          Strength progression
+          {t("Strength progression", "Erőnléti fejlődés")}
         </h3>
       </div>
 
@@ -66,7 +70,7 @@ export default function ProgressChart({
         {/* Exercise selector */}
         <div>
           <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">
-            Exercises
+            {t("Exercises", "Gyakorlatok")}
           </h4>
 
           <div className="max-h-[120px] space-y-1 overflow-y-auto pr-2">
@@ -94,7 +98,7 @@ export default function ProgressChart({
 
             {exercises.length === 0 && (
               <p className="text-sm text-zinc-500">
-                No exercises found.
+                {t("No exercises found.", "Nincsenek gyakorlatok.")}
               </p>
             )}
           </div>
@@ -104,21 +108,21 @@ export default function ProgressChart({
         <div className="min-w-0">
           <div className="mb-5">
             <h4 className="font-medium text-white">
-              {selectedName ?? "Select an exercise"}
+              {selectedName ?? t("Select an exercise", "Válassz gyakorlatot")}
             </h4>
 
             <p className="mt-1 text-xs text-zinc-500">
-              {exerciseData.length} recorded sets
+              {exerciseData.length.toLocaleString(numberLocale)} {t("recorded sets", "rögzített szett")}
             </p>
           </div>
 
           {selectedExercise === null ? (
             <div className="flex h-64 items-center justify-center rounded-xl bg-zinc-900/50 px-6 text-center text-sm text-zinc-500">
-              Select an exercise to see your progress.
+              {t("Select an exercise to see your progress.", "Válassz gyakorlatot a fejlődésed megtekintéséhez.")}
             </div>
           ) : exerciseData.length === 0 ? (
             <div className="flex h-64 items-center justify-center rounded-xl bg-zinc-900/50 px-6 text-center text-sm text-zinc-500">
-              No completed sets recorded for this exercise.
+              {t("No completed sets recorded for this exercise.", "Ehhez a gyakorlathoz még nincs elvégzett szett.")}
             </div>
           ) : (
             <div className="h-64 w-full">
@@ -145,7 +149,7 @@ export default function ProgressChart({
                     domain={["dataMin", "dataMax"]}
                     tickFormatter={(value) =>
                       new Date(value).toLocaleDateString(
-                        "en",
+                        numberLocale,
                         {
                           month: "short",
                           day: "numeric",
@@ -162,13 +166,13 @@ export default function ProgressChart({
                     tickLine={false}
                     axisLine={false}
                     domain={["auto", "auto"]}
-                    tickFormatter={(value) => `${value} kg`}
+                    tickFormatter={(value) => `${Number(value).toLocaleString(numberLocale)} kg`}
                   />
 
                   <Tooltip
                     labelFormatter={(value) =>
                       new Date(Number(value)).toLocaleString(
-                        "en",
+                        numberLocale,
                         {
                           dateStyle: "medium",
                           timeStyle: "short",
@@ -177,10 +181,10 @@ export default function ProgressChart({
                     }
                     formatter={(value, name) => {
                       if (name === "weight") {
-                        return [`${value} kg`, "Weight"];
+                        return [`${Number(value).toLocaleString(numberLocale)} kg`, t("Weight", "Súly")];
                       }
 
-                      return [value, "Reps"];
+                      return [value, t("Reps", "Ismétlés")];
                     }}
                     contentStyle={{
                       background: "#18181b",

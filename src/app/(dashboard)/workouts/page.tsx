@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { getI18n } from "@/lib/i18n-server";
 
 import { startWorkout } from "@/components/workouts/actions";
 import { headers } from "next/headers";
@@ -12,33 +14,13 @@ import {
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-export const instant = false
-
-function formatDuration(
-  startedAt: Date,
-  finishedAt: Date | null
-) {
-  if (!finishedAt) return "In progress";
-
-  const minutes = Math.max(
-    1,
-    Math.round(
-      (finishedAt.getTime() - startedAt.getTime()) / 60000
-    )
-  );
-
-  return `${minutes} min`;
-}
-
-function formatDate(date: Date) {
-  return new Intl.DateTimeFormat("en", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(date);
-}
+export const instant = false;
 
 export default async function WorkoutsPage() {
+  const { locale, t } = await getI18n();
+  const formatDate = (date: Date) => new Intl.DateTimeFormat(locale === "hu" ? "hu-HU" : "en-GB", { year: "numeric", month: "short", day: "numeric", timeZone: "Europe/Budapest" }).format(date);
+  const formatDuration = (start: Date, end: Date | null) => end ? `${Math.max(1, Math.round((end.getTime() - start.getTime()) / 60000))} ${t("min", "perc")}` : t("In progress", "Folyamatban");
+  const formatNumber = (value: number) => value.toLocaleString(locale === "hu" ? "hu-HU" : "en-GB");
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -69,9 +51,7 @@ export default async function WorkoutsPage() {
         },
         exercises: {
           include: {
-            _count: {
-              select: { sets: true },
-            },
+            sets: { select: { completed: true } },
           },
         },
       },
@@ -114,14 +94,16 @@ export default async function WorkoutsPage() {
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <h1 className="text-2xl font-bold text-white">
-            Workouts
+            {t("Workouts", "Edzések")}
           </h1>
 
           <p className="mt-1 text-sm text-zinc-500">
-            Your training history, all in one place.
+            {t("Your training history, all in one place.", "Az edzéstörténeted egy helyen.")}
           </p>
         </div>
 
+        <div className="flex flex-wrap items-center gap-3">
+        <Link href="/plans" className="rounded-xl border border-zinc-700 px-5 py-3 text-sm font-semibold text-white hover:border-lime-400">{t("Saved plans", "Mentett edzéstervek")}</Link>
         <form action={startWorkout}>
           <button
             type="submit"
@@ -129,10 +111,11 @@ export default async function WorkoutsPage() {
           >
           <Plus size={18} />
             {activeWorkout
-            ? "Continue workout"
-            : "Start workout"}
+            ? t("Continue workout", "Edzés folytatása")
+            : t("Start workout", "Edzés indítása")}
           </button>
         </form>
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
@@ -143,11 +126,11 @@ export default async function WorkoutsPage() {
           />
 
           <p className="mt-4 text-2xl font-bold text-white">
-            {totalWorkouts}
+            {formatNumber(totalWorkouts)}
           </p>
 
           <p className="mt-1 text-sm text-zinc-500">
-            Completed workouts
+            {t("Completed workouts", "Befejezett edzések")}
           </p>
         </div>
 
@@ -158,11 +141,11 @@ export default async function WorkoutsPage() {
           />
 
           <p className="mt-4 text-2xl font-bold text-white">
-            {thisWeek}
+            {formatNumber(thisWeek)}
           </p>
 
           <p className="mt-1 text-sm text-zinc-500">
-            This week
+            {t("This week", "Ezen a héten")}
           </p>
         </div>
 
@@ -173,11 +156,11 @@ export default async function WorkoutsPage() {
           />
 
           <p className="mt-4 text-2xl font-bold text-white">
-            {personalRecordSets}
+            {formatNumber(personalRecordSets)}
           </p>
 
           <p className="mt-1 text-sm text-zinc-500">
-            Completed sets recorded
+            {t("Completed sets recorded", "Rögzített teljesített szettek")}
           </p>
         </div>
       </div>
@@ -185,7 +168,7 @@ export default async function WorkoutsPage() {
       <section className="rounded-2xl border border-zinc-800 bg-[#111113] p-5 sm:p-6">
         <div className="mb-6">
           <h2 className="font-semibold text-white">
-            Workout history
+            {t("Workout history", "Edzéstörténet")}
           </h2>
         </div>
 
@@ -197,25 +180,27 @@ export default async function WorkoutsPage() {
             />
 
             <p className="mt-3 font-medium text-white">
-              No workouts yet
+              {t("No workouts yet", "Még nincs edzésed")}
             </p>
 
             <p className="mt-1 text-sm text-zinc-500">
-              Your completed training sessions will appear here.
+              {t("Your completed training sessions will appear here.", "Itt jelennek meg a befejezett edzéseid.")}
             </p>
           </div>
         ) : (
           <div className="space-y-3">
             {workouts.map((workout) => {
               const setCount = workout.exercises.reduce(
-                (sum, item) => sum + item._count.sets,
+                (sum, item) => sum + item.sets.length,
                 0
               );
 
+              const completedCount = workout.exercises.reduce((sum, item) => sum + item.sets.filter((set) => set.completed).length, 0);
               return (
-                <div
+                <Link
+                  href={workout.finishedAt ? `/workouts/${workout.id}` : "/workouts/new"}
                   key={workout.id}
-                  className="flex items-center gap-3 rounded-xl bg-zinc-900 p-4 sm:gap-4"
+                  className="flex items-center gap-3 rounded-xl bg-zinc-900 p-4 transition hover:bg-zinc-800 focus-visible:outline-lime-400 sm:gap-4"
                 >
                   <div className="rounded-xl bg-zinc-800 p-3">
                     <Dumbbell
@@ -230,8 +215,8 @@ export default async function WorkoutsPage() {
                     </p>
 
                     <p className="mt-1 text-xs text-zinc-500">
-                      {workout._count.exercises} exercises ·{" "}
-                      {setCount} sets
+                      {workout._count.exercises} {t("exercises", "gyakorlat")} ·{" "}
+                      {completedCount}/{setCount} {t("sets completed", "teljesített szett")}
                     </p>
                   </div>
 
@@ -254,7 +239,7 @@ export default async function WorkoutsPage() {
                       )}
                     </p>
                   </div>
-                </div>
+                </Link>
               );
             })}
           </div>

@@ -1,6 +1,8 @@
 "use client";
 
+import { exerciseLabel } from "@/lib/exercise-labels";
 import { useMemo, useState } from "react";
+import { useI18n } from "@/components/i18n-provider";
 import { Plus, Search, X } from "lucide-react";
 
 export interface ExerciseOption {
@@ -24,6 +26,7 @@ export default function ExerciseSelector({
   onSelect,
   disabled = false,
 }: ExerciseSelectorProps) {
+  const { locale, t } = useI18n();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
 
@@ -32,11 +35,11 @@ export default function ExerciseSelector({
       exercises.filter(
         (exercise) =>
           !existingIds.includes(exercise.id) &&
-          `${exercise.name} ${exercise.muscleGroup} ${exercise.machine}`
-            .toLowerCase()
-            .includes(search.toLowerCase())
+          `${exercise.name} ${exercise.muscleGroup} ${exercise.machine} ${exerciseLabel(exercise.muscleGroup, locale)} ${exerciseLabel(exercise.machine, locale)}`
+            .toLocaleLowerCase(locale)
+            .includes(search.toLocaleLowerCase(locale))
       ),
-    [exercises, existingIds, search]
+    [exercises, existingIds, search, locale]
   );
 
   return (
@@ -48,7 +51,7 @@ export default function ExerciseSelector({
         className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-zinc-700 py-4 text-sm font-semibold text-lime-400 transition hover:border-lime-400 hover:bg-lime-400/5 disabled:opacity-50"
       >
         <Plus size={18} />
-        Add exercise
+        {t("Add exercise", "Gyakorlat hozzáadása")}
       </button>
 
       {open && (
@@ -64,14 +67,14 @@ export default function ExerciseSelector({
                 id="exercise-selector-title"
                 className="text-lg font-semibold text-white"
               >
-                Select exercise
+                {t("Select exercise", "Gyakorlat kiválasztása")}
               </h3>
 
               <button
                 type="button"
                 onClick={() => setOpen(false)}
                 className="text-zinc-400 hover:text-white"
-                aria-label="Close exercise selector"
+                aria-label={t("Close exercise selector", "Gyakorlatválasztó bezárása")}
               >
                 <X size={20} />
               </button>
@@ -89,7 +92,7 @@ export default function ExerciseSelector({
                 onChange={(event) =>
                   setSearch(event.target.value)
                 }
-                placeholder="Search exercises..."
+                placeholder={t("Search exercises...", "Gyakorlatok keresése...")}
                 className="w-full bg-transparent py-3 text-sm text-white outline-none"
               />
             </div>
@@ -99,6 +102,7 @@ export default function ExerciseSelector({
                 <button
                   type="button"
                   key={exercise.id}
+                  disabled={disabled}
                   onClick={() => {
                     onSelect(exercise);
                     setOpen(false);
@@ -112,8 +116,8 @@ export default function ExerciseSelector({
                     </span>
 
                     <span className="mt-1 block text-xs text-zinc-500">
-                      {exercise.machine || "No equipment"} ·{" "}
-                      {exercise.muscleGroup || "Uncategorized"}
+                      {exerciseLabel(exercise.machine, locale) || t("No equipment", "Eszköz nélkül")} ·{" "}
+                      {exerciseLabel(exercise.muscleGroup, locale) || t("Uncategorized", "Egyéb")}
                     </span>
                   </span>
 
@@ -127,8 +131,8 @@ export default function ExerciseSelector({
               {filtered.length === 0 && (
                 <p className="py-8 text-center text-sm text-zinc-500">
                   {exercises.length === 0
-                    ? "The exercise library is empty. Apply the exercise-library migration to add the starter catalogue."
-                    : "No exercises found."}
+                    ? t("The exercise library is empty. Add an exercise in Settings.", "A gyakorlattár üres. Adj hozzá gyakorlatot a Beállításokban.")
+                    : t("No exercises found.", "Nincs találat.")}
                 </p>
               )}
             </div>

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import WorkoutEditor from "@/components/workouts/workout-editor";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getI18n } from "@/lib/i18n-server";
 
 export const instant = false
 
@@ -17,10 +18,11 @@ export default async function NewWorkoutPage() {
   }
 
   const userId = session.user.id;
+  const { t, locale } = await getI18n();
 
   // Reuse an unfinished workout so refreshing or returning
   // to this route does not create duplicate draft sessions.
-  let workout = await prisma.workout.findFirst({
+  const workout = await prisma.workout.findFirst({
     where: {
       userId,
       finishedAt: null,
@@ -89,7 +91,7 @@ export default async function NewWorkoutPage() {
     if (bestSet) {
       previousByExercise.set(
         entry.exercise.id,
-        `${Number(bestSet.weightKg)} kg × ${bestSet.reps} reps`
+        `${Number(bestSet.weightKg).toLocaleString(locale)} kg × ${bestSet.reps} ${t("reps", "ismétlés")}`
       );
     }
   }
@@ -101,7 +103,7 @@ export default async function NewWorkoutPage() {
     machine: exercise.machine ?? "",
     previous:
       previousByExercise.get(exercise.id) ??
-      "No previous performance",
+      t("No previous performance", "Még nincs korábbi teljesítmény"),
   }));
 
   return (
@@ -113,12 +115,13 @@ export default async function NewWorkoutPage() {
 	finishedAt: workout.finishedAt?.toISOString() ?? null,
         exercises: workout.exercises.map((item) => ({
           id: item.id,
+          exerciseId: item.exerciseId,
           name: item.exercise.name,
           muscleGroup: item.exercise.muscleGroup ?? "",
           machine: item.exercise.machine ?? "",
           previous:
             previousByExercise.get(item.exerciseId) ??
-            "No previous performance",
+            t("No previous performance", "Még nincs korábbi teljesítmény"),
           sets: item.sets.map((set) => ({
             id: set.id,
             weight: Number(set.weightKg),

@@ -1,36 +1,56 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# IronTrack
 
-## Getting Started
+Next.js workout tracker with PostgreSQL, Prisma and Better Auth.
 
-First, run the development server:
+## Development
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+Use Node.js 24 and npm. Install dependencies with `npm ci`, then create an ignored `.env`:
+
+```dotenv
+DATABASE_URL="postgresql://irontrack:local_dev_password@localhost:5432/irontrack"
+BETTER_AUTH_URL="http://localhost:3000"
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+BETTER_AUTH_SECRET="replace-with-a-random-local-secret-of-at-least-32-characters"
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Generate your own auth secret; never commit `.env`. The Docker database password above is for local development only.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+docker compose up -d --wait postgres
+npm run db:generate
+npm run db:migrate
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Prisma uses `prisma7.config.ts`, including for generation and migrations. Its native engine download requires HTTPS access to `binaries.prisma.sh`; keep checksum and TLS verification enabled. Apply migrations before starting the updated app, including `20261116190000_locale_and_workout_plans`.
 
-## Learn More
+## Training workflow
 
-To learn more about Next.js, take a look at the following resources:
+- **Settings → Language** switches between English and Hungarian. Signed-in preferences are stored on the account and apply across devices. Before sign-in, a cookie stores the selected language; new accounts inherit it. Existing accounts default to English.
+- **Workout plans** lets you create, edit and delete private routines containing exercises, target weights, reps and sets. Starting a plan copies it into a new session with every set unchecked. Finish the active workout before starting another one.
+- **Workouts** resumes the active session and lists completed sessions. Set values and completion are saved to the account. Complete at least one set to finish a session.
+- Open a completed workout to review its exercises, recorded and completed sets, duration and volume. Volume counts completed sets only. Completed sessions are read-only; editing or deleting a plan leaves their records unchanged.
+- Exercise names remain as entered. Shared exercise classifications and application controls have Hungarian labels.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Checks
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm test
+npm run lint
+npm run typecheck
+npm run build
+```
 
-## Deploy on Vercel
+Run the build separately from the development server because both write `.next`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+The browser integration test uses an already-running app and the development database configured by `.env`. It creates two randomly named accounts and deletes only those accounts and their related records afterward. It checks registration language, cross-device preferences, plan creation/edit/delete/reuse, set persistence, completed-history protection and isolation between accounts.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npx playwright install chromium
+# Start the app in another terminal, then:
+npm run test:e2e
+# To use an installed Chromium instead:
+CHROMIUM_PATH=/usr/bin/chromium npm run test:e2e
+```
+
+Set `TEST_BASE_URL` if the app runs on a different address. Its origin must match the Better Auth URL and trusted origins. Use a local development database for these checks.

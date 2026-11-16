@@ -1,7 +1,10 @@
 
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { exerciseLabel } from "@/lib/exercise-labels";
+import { useI18n } from "@/components/i18n-provider";
+
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -56,6 +59,8 @@ export default function ExerciseLibrary({
   exercises: Exercise[];
 }) {
   const router = useRouter();
+  const { locale, t } = useI18n();
+  const label = (value: string) => exerciseLabel(value, locale);
 
   const [exercises, setExercises] = useState(initialExercises);
   const [search, setSearch] = useState("");
@@ -71,7 +76,7 @@ export default function ExerciseLibrary({
 
   const [isPending, startTransition] = useTransition();
 
-  const filteredExercises = useMemo(() => {
+  const filteredExercises = (() => {
     const query = search.trim().toLowerCase();
 
     return exercises.filter((exercise) => {
@@ -79,6 +84,8 @@ export default function ExerciseLibrary({
         !query ||
         exercise.name.toLowerCase().includes(query) ||
         (exercise.machine ?? "").toLowerCase().includes(query) ||
+        label(exercise.machine ?? "").toLocaleLowerCase(locale).includes(query) ||
+        label(exercise.muscleGroup ?? "").toLocaleLowerCase(locale).includes(query) ||
         (exercise.muscleGroup ?? "").toLowerCase().includes(query);
 
       const matchesGroup =
@@ -87,7 +94,7 @@ export default function ExerciseLibrary({
 
       return matchesSearch && matchesGroup;
     });
-  }, [exercises, search, selectedGroup]);
+  })();
 
   function handleAddExercise(event: React.FormEvent<HTMLFormElement>) {
   event.preventDefault();
@@ -98,12 +105,12 @@ export default function ExerciseLibrary({
     const result = await addGlobalExercise(name, machine, muscleGroup);
 
     if (!result.success) {
-      setError(result.error ?? "Something went wrong. Please try again.");
+      setError(result.error ?? t("Something went wrong. Please try again.", "Hiba történt. Próbáld újra."));
       return;
     }
 
     if (!result.exercise) {
-      setError("The exercise was created, but its details could not be loaded.");
+      setError(t("The exercise was created, but its details could not be loaded.", "A gyakorlat létrejött, de az adatait nem sikerült betölteni."));
       return;
     }
 
@@ -111,7 +118,7 @@ export default function ExerciseLibrary({
 
     setExercises((current) =>
       [...current, newExercise].sort((a, b) =>
-        a.name.localeCompare(b.name)
+        a.name.localeCompare(b.name, locale)
       )
     );
 
@@ -123,7 +130,7 @@ export default function ExerciseLibrary({
     setSelectedGroup("All");
 
     setSuccess(
-      `${newExercise.name} was added to the shared exercise library.`
+      t(`${newExercise.name} was added to the shared exercise library.`, `${newExercise.name} bekerült a közös gyakorlattárba.`)
     );
 
     router.refresh();
@@ -137,9 +144,9 @@ export default function ExerciseLibrary({
         <div>
           <p className="text-sm text-zinc-400">
             <span className="font-semibold text-white">
-              {exercises.length}
+              {exercises.length.toLocaleString(locale)}
             </span>{" "}
-            exercises available to everyone
+            {t("exercises available to everyone", "mindenki számára elérhető gyakorlat")}
           </p>
         </div>
 
@@ -154,7 +161,7 @@ export default function ExerciseLibrary({
         >
           {showForm ? <X size={18} /> : <Plus size={18} />}
 
-          {showForm ? "Cancel" : "Add exercise"}
+          {showForm ? t("Cancel", "Mégse") : t("Add exercise", "Gyakorlat hozzáadása")}
         </button>
       </div>
 
@@ -163,11 +170,11 @@ export default function ExerciseLibrary({
         <section className="rounded-2xl border border-lime-400/30 bg-[#111113] p-5 sm:p-6">
           <div className="mb-5">
             <h2 className="font-semibold text-white">
-              Add a new exercise
+              {t("Add a new exercise", "Új gyakorlat hozzáadása")}
             </h2>
 
             <p className="mt-1 text-sm text-zinc-500">
-              Your exercise will become available to all users.
+              {t("Your exercise will become available to all users.", "A gyakorlatot minden felhasználó elérheti majd.")}
             </p>
           </div>
 
@@ -180,7 +187,7 @@ export default function ExerciseLibrary({
                 htmlFor="exercise-name"
                 className="mb-2 block text-sm font-medium text-zinc-300"
               >
-                Exercise name
+                {t("Exercise name", "Gyakorlat neve")}
               </label>
 
               <input
@@ -192,7 +199,7 @@ export default function ExerciseLibrary({
                 }
                 maxLength={80}
                 required
-                placeholder="e.g. Incline Chest Press"
+                placeholder={t("e.g. Incline Chest Press", "pl. Ferdepados mellnyomás")}
                 className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm text-white outline-none transition placeholder:text-zinc-600 focus:border-lime-400"
               />
             </div>
@@ -203,7 +210,7 @@ export default function ExerciseLibrary({
                   htmlFor="exercise-equipment"
                   className="mb-2 block text-sm font-medium text-zinc-300"
                 >
-                  Equipment
+                  {t("Equipment", "Eszköz")}
                 </label>
 
                 <select
@@ -216,7 +223,7 @@ export default function ExerciseLibrary({
                 >
                   {equipmentOptions.map((option) => (
                     <option key={option} value={option}>
-                      {option}
+                      {label(option)}
                     </option>
                   ))}
                 </select>
@@ -227,7 +234,7 @@ export default function ExerciseLibrary({
                   htmlFor="exercise-muscle"
                   className="mb-2 block text-sm font-medium text-zinc-300"
                 >
-                  Muscle group
+                  {t("Muscle group", "Izomcsoport")}
                 </label>
 
                 <select
@@ -240,7 +247,7 @@ export default function ExerciseLibrary({
                 >
                   {groupOptions.map((option) => (
                     <option key={option} value={option}>
-                      {option}
+                      {label(option)}
                     </option>
                   ))}
                 </select>
@@ -262,7 +269,7 @@ export default function ExerciseLibrary({
                 }}
                 className="rounded-xl border border-zinc-700 px-5 py-3 text-sm font-medium text-zinc-300 transition hover:bg-zinc-800"
               >
-                Cancel
+                {t("Cancel", "Mégse")}
               </button>
 
               <button
@@ -279,7 +286,7 @@ export default function ExerciseLibrary({
                   <Plus size={17} />
                 )}
 
-                {isPending ? "Adding..." : "Add exercise"}
+                {isPending ? t("Adding...", "Hozzáadás…") : t("Add exercise", "Gyakorlat hozzáadása")}
               </button>
             </div>
           </form>
@@ -307,7 +314,7 @@ export default function ExerciseLibrary({
           onChange={(event) =>
             setSearch(event.target.value)
           }
-          placeholder="Search exercises, equipment or muscle groups..."
+          placeholder={t("Search exercises, equipment or muscle groups...", "Gyakorlat, eszköz vagy izomcsoport keresése…")}
           className="w-full rounded-xl border border-zinc-800 bg-[#111113] py-3.5 pl-12 pr-4 text-sm text-white outline-none transition placeholder:text-zinc-600 focus:border-lime-400"
         />
       </div>
@@ -328,7 +335,7 @@ export default function ExerciseLibrary({
                   : "border border-zinc-800 bg-[#111113] text-zinc-400 hover:border-zinc-600 hover:text-white"
               }`}
             >
-              {group}
+              {label(group)}
             </button>
           );
         })}
@@ -338,11 +345,11 @@ export default function ExerciseLibrary({
       <section className="overflow-hidden rounded-2xl border border-zinc-800 bg-[#111113]">
         <div className="flex items-center justify-between border-b border-zinc-800 px-5 py-4">
           <h2 className="font-semibold text-white">
-            All exercises
+            {t("All exercises", "Összes gyakorlat")}
           </h2>
 
           <span className="text-xs text-zinc-500">
-            {filteredExercises.length} results
+            {filteredExercises.length.toLocaleString(locale)} {t("results", "találat")}
           </span>
         </div>
 
@@ -354,11 +361,11 @@ export default function ExerciseLibrary({
             />
 
             <p className="mt-3 font-medium text-white">
-              No exercises found
+              {t("No exercises found", "Nincs találat")}
             </p>
 
             <p className="mt-1 text-sm text-zinc-500">
-              Try another search or add a new exercise.
+              {t("Try another search or add a new exercise.", "Próbálj más keresést, vagy adj hozzá új gyakorlatot.")}
             </p>
           </div>
         ) : (
@@ -381,14 +388,14 @@ export default function ExerciseLibrary({
                   </p>
 
                   <p className="mt-1 text-xs text-zinc-500">
-                    {exercise.machine ?? "Equipment not specified"}
+                    {exercise.machine ? label(exercise.machine) : t("Equipment not specified", "Nincs megadott eszköz")}
                     {" · "}
-                    {exercise.muscleGroup ?? "Uncategorized"}
+                    {exercise.muscleGroup ? label(exercise.muscleGroup) : t("Uncategorized", "Nincs kategória")}
                   </p>
                 </div>
 
                 <span className="hidden shrink-0 rounded-full border border-zinc-800 px-3 py-1 text-xs text-zinc-500 sm:inline-flex">
-                  Shared
+                  {t("Shared", "Közös")}
                 </span>
               </div>
             ))}
@@ -397,7 +404,7 @@ export default function ExerciseLibrary({
       </section>
 
       <p className="text-center text-xs text-zinc-600">
-        Exercises added to this library are shared with all IRONTRACK users.
+        {t("Exercises added to this library are shared with all IRONTRACK users.", "A tárba felvett gyakorlatok minden IRONTRACK-felhasználó számára elérhetők.")}
       </p>
     </div>
   );
