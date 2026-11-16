@@ -20,94 +20,94 @@ SELECT
 FROM (
     VALUES
     (
-        'Fekvenyomas',
-        'Rud',
-        'Mell'
+        'Bench Press',
+        'Barbell',
+        'Chest'
     ),
     (
-        'Mellnyomas',
-        'Gep',
-        'Mell'
+        'Chest Press',
+        'Machine',
+        'Chest'
     ),
     (
         'Incline Dumbbell Press',
         'Dumbbells',
-        'Mell'
+        'Chest'
     ),
     (
-        'Mell tarogatas',
-        'Gep',
-        'Mell'
+        'Chest Fly',
+        'Machine',
+        'Chest'
     ),
     (
-        'Huzockodas',
-        'Szabad suly',
-        'Hat'
+        'Bent-Over Row',
+        'Free Weights',
+        'Back'
     ),
     (
-        'Lehuzas',
-        'Gep',
-        'Hat'
+        'Lat Pulldown',
+        'Machine',
+        'Back'
     ),
     (
-        'Szeles huzas ulve',
-        'Gep',
-        'Hat'
+        'Wide-Grip Seated Row',
+        'Machine',
+        'Back'
     ),
     (
-        'Szuk huzas ulve',
-        'Gep',
-        'Hat'
+        'Close-Grip Seated Row',
+        'Machine',
+        'Back'
     ),
     (
-        'Oldal emeles',
-        'Gep',
-        'Vall'
+        'Lateral Raise',
+        'Machine',
+        'Shoulders'
     ),
     (
-        'Kitolas',
-        'Gep',
-        'Vall'
+        'Shoulder Press',
+        'Machine',
+        'Shoulders'
     ),
     (
-        'Bicepsz',
-        'Kezi suly',
-        'Kar'
+        'Bicep Curl',
+        'Dumbbells',
+        'Arms'
     ),
     (
-        'Tricepsz',
-        'Kezi suly',
-        'Kar'
+        'Tricep Extension',
+        'Dumbbells',
+        'Arms'
     ),
     (
-        'Labtolo',
-        'Gep',
-        'Lab'
+        'Leg Press',
+        'Machine',
+        'Legs'
     ),
     (
-        'Gugolas',
-        'Gep',
-        'Lab'
+        'Squat',
+        'Machine',
+        'Legs'
     ),
     (
-        'Labfeszito',
-        'Gep',
-        'Lab'
+        'Leg Extension',
+        'Machine',
+        'Legs'
     ),
     (
-        'Labhajlito',
-        'Gep',
-        'Lab'
+        'Leg Curl',
+        'Machine',
+        'Legs'
     ),
     (
-        'Felhuzas',
-        'Rud',
-        'Lab'
+        'Deadlift',
+        'Barbell',
+        'Legs'
     ),
     (
-        'Vadli',
-        'Gep',
-        'Vadli'
+        'Calf Raise',
+        'Machine',
+        'Calves'
     )
 ) AS seed(
     "name",
