@@ -89,45 +89,46 @@ export default function ExerciseLibrary({
     });
   }, [exercises, search, selectedGroup]);
 
-  function handleAddExercise(
-    event: React.FormEvent<HTMLFormElement>
-  ) {
-    event.preventDefault();
+  function handleAddExercise(event: React.FormEvent<HTMLFormElement>) {
+  event.preventDefault();
+  setError("");
+  setSuccess("");
 
-    setError("");
-    setSuccess("");
+  startTransition(async () => {
+    const result = await addGlobalExercise(name, machine, muscleGroup);
 
-    startTransition(async () => {
-      const result = await addGlobalExercise(
-        name,
-        machine,
-        muscleGroup
-      );
+    if (!result.success) {
+      setError(result.error ?? "Something went wrong. Please try again.");
+      return;
+    }
 
-      if (!result.success) {
-        setError(result.error);
-        return;
-      }
+    if (!result.exercise) {
+      setError("The exercise was created, but its details could not be loaded.");
+      return;
+    }
 
-      setExercises((current) =>
-        [...current, result.exercise].sort((a, b) =>
-          a.name.localeCompare(b.name)
-        )
-      );
+    const newExercise: Exercise = result.exercise;
 
-      setName("");
-      setMachine("Machine");
-      setMuscleGroup("Chest");
-      setShowForm(false);
-      setSearch("");
-      setSelectedGroup("All");
-      setSuccess(
-        `${result.exercise.name} was added to the shared exercise library.`
-      );
+    setExercises((current) =>
+      [...current, newExercise].sort((a, b) =>
+        a.name.localeCompare(b.name)
+      )
+    );
 
-      router.refresh();
-    });
-  }
+    setName("");
+    setMachine("Machine");
+    setMuscleGroup("Chest");
+    setShowForm(false);
+    setSearch("");
+    setSelectedGroup("All");
+
+    setSuccess(
+      `${newExercise.name} was added to the shared exercise library.`
+    );
+
+    router.refresh();
+  });
+}
 
   return (
     <div className="space-y-6">
